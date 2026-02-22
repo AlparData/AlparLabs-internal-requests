@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sim_user,material.request.sim.user,model_material_request_sim,group_obra_user,1,1,1,0
+access_sim_line_user,material.request.sim.line.user,model_material_request_sim_line,group_obra_user,1,1,1,0
+access_pim_user,material.request.pim.user,model_material_request_pim,group_obra_user,1,1,1,0
+access_pim_line_user,material.request.pim.line.user,model_material_request_pim_line,group_obra_user,1,1,1,0
+access_sim_manager,material.request.sim.manager,model_material_request_sim,group_obra_manager,1,1,1,1
+access_sim_line_manager,material.request.sim.line.manager,model_material_request_sim_line,group_obra_manager,1,1,1,1
+access_pim_manager,material.request.pim.manager,model_material_request_pim,group_obra_manager,1,1,1,1
+access_pim_line_manager,material.request.pim.line.manager,model_material_request_pim_line,group_obra_manager,1,1,1,1
+access_sim_logistics,material.request.sim.logistics,model_material_request_sim,group_logistics,1,1,1,0
+access_sim_line_logistics,material.request.sim.line.logistics,model_material_request_sim_line,group_logistics,1,1,1,0
+access_pim_purchasing,material.request.pim.purchasing,model_material_request_pim,group_purchasing,1,1,1,0
+access_pim_line_purchasing,material.request.pim.line.purchasing,model_material_request_pim_line,group_purchasing,1,1,1,0

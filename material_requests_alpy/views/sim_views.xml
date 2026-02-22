@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- SIM: TREE / LIST VIEW                                        -->
+    <!-- ============================================================ -->
+    <record id="view_sim_list" model="ir.ui.view">
+        <field name="name">material.request.sim.list</field>
+        <field name="model">material.request.sim</field>
+        <field name="arch" type="xml">
+            <list string="Solicitudes Internas de Material (SIM)"
+                   decoration-danger="state == 'pending_stock'"
+                   decoration-success="state == 'delivered'"
+                   decoration-muted="state == 'canceled'"
+                   decoration-warning="state == 'pending_approval'"
+                   decoration-info="state == 'shipped'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="location_id"/>
+                <field name="date_request"/>
+                <field name="state" widget="badge"
+                       decoration-danger="state == 'pending_stock'"
+                       decoration-success="state == 'delivered'"
+                       decoration-warning="state == 'pending_approval'"
+                       decoration-info="state in ('shipped', 'approved')"
+                       decoration-muted="state == 'canceled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- SIM: FORM VIEW                                               -->
+    <!-- ============================================================ -->
+    <record id="view_sim_form" model="ir.ui.view">
+        <field name="name">material.request.sim.form</field>
+        <field name="model">material.request.sim</field>
+        <field name="arch" type="xml">
+            <form string="Solicitud Interna de Material (SIM)">
+                <header>
+                    <!-- State transition buttons -->
+                    <button name="action_submit" string="Enviar a Aprobación"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Aprobar"
+                            type="object" class="btn-primary"
+                            invisible="state != 'pending_approval'"
+                            groups="material_requests_alpy.group_obra_manager"/>
+                    <button name="action_force_approve" string="Aprobar (Forzar)"
+                            type="object" class="btn-warning"
+                            invisible="state != 'pending_stock'"
+                            groups="material_requests_alpy.group_obra_manager"/>
+                    <button name="action_ship" string="Marcar como Despachado"
+                            type="object" class="btn-primary"
+                            invisible="state != 'approved'"
+                            groups="material_requests_alpy.group_logistics"/>
+                    <button name="action_deliver" string="Marcar como Entregado"
+                            type="object" class="btn-primary"
+                            invisible="state != 'shipped'"
+                            groups="material_requests_alpy.group_logistics"/>
+                    <button name="action_cancel" string="Anular"
+                            type="object" class="btn-danger"
+                            invisible="state in ('delivered', 'canceled')"/>
+                    <button name="action_reset_draft" string="Volver a Borrador"
+                            type="object"
+                            invisible="state != 'canceled'"/>
+                    <!-- Quick PIM creation button -->
+                    <button name="action_create_pim" string="🛒 Crear PIM Referenciada"
+                            type="object" class="btn-warning"
+                            invisible="state != 'pending_stock'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,pending_approval,approved,shipped,delivered"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_pims" type="object"
+                                class="oe_stat_button" icon="fa-shopping-cart"
+                                invisible="pim_count == 0">
+                            <field name="pim_count" widget="statinfo" string="PIMs"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Información General">
+                            <field name="project_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="location_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                        </group>
+                        <group string="Fechas">
+                            <field name="date_request"/>
+                            <field name="date_approved"
+                                   invisible="not date_approved"/>
+                            <field name="date_shipped"
+                                   invisible="not date_shipped"/>
+                            <field name="date_delivered"
+                                   invisible="not date_delivered"/>
+                        </group>
+                    </group>
+                    <!-- Stock warning banner -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not has_stock_issues">
+                        <strong>⚠️ Atención:</strong> Algunos materiales no tienen stock suficiente en el depósito seleccionado.
+                    </div>
+                    <notebook>
+                        <page string="Ítems de Material" name="items">
+                            <field name="line_ids"
+                                   readonly="state not in ('draft', 'pending_approval')">
+                                <list editable="bottom"
+                                       decoration-danger="stock_status == 'none'"
+                                       decoration-warning="stock_status == 'partial'"
+                                       decoration-success="stock_status == 'ok'">
+                                    <field name="product_id"/>
+                                    <field name="product_category_id" readonly="1" optional="hide"/>
+                                    <field name="uom_id" readonly="1"/>
+                                    <field name="qty_requested"/>
+                                    <field name="qty_shipped"
+                                           readonly="state not in ('approved', 'shipped')"/>
+                                    <field name="stock_available" readonly="1"/>
+                                    <field name="stock_status" widget="badge"
+                                           decoration-danger="stock_status == 'none'"
+                                           decoration-warning="stock_status == 'partial'"
+                                           decoration-success="stock_status == 'ok'"
+                                           readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas" name="notes">
+                            <field name="notes" placeholder="Notas adicionales..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- SIM: SEARCH VIEW                                             -->
+    <!-- ============================================================ -->
+    <record id="view_sim_search" model="ir.ui.view">
+        <field name="name">material.request.sim.search</field>
+        <field name="model">material.request.sim</field>
+        <field name="arch" type="xml">
+            <search string="Buscar SIM">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="user_id"/>
+                <field name="location_id"/>
+                <filter string="Mis SIMs" name="my_sims"
+                        domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Borrador" name="draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter string="Pendientes de Aprobación" name="pending_approval"
+                        domain="[('state', '=', 'pending_approval')]"/>
+                <filter string="Pendiente de Stock" name="pending_stock"
+                        domain="[('state', '=', 'pending_stock')]"/>
+                <filter string="Aprobado" name="approved"
+                        domain="[('state', '=', 'approved')]"/>
+                <filter string="Despachado" name="shipped"
+                        domain="[('state', '=', 'shipped')]"/>
+                <filter string="Entregado" name="delivered"
+                        domain="[('state', '=', 'delivered')]"/>
+                <filter string="Anulado" name="canceled"
+                        domain="[('state', '=', 'canceled')]"/>
+                <separator/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Obra" name="group_project"
+                            context="{'group_by': 'project_id'}"/>
+                    <filter string="Estado" name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Solicitante" name="group_user"
+                            context="{'group_by': 'user_id'}"/>
+                    <filter string="Depósito" name="group_location"
+                            context="{'group_by': 'location_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- SIM: ACTIONS                                                 -->
+    <!-- ============================================================ -->
+    <record id="action_sim_list" model="ir.actions.act_window">
+        <field name="name">Solicitudes Internas (SIM)</field>
+        <field name="res_model">material.request.sim</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sim_search"/>
+        <field name="context">{'search_default_my_sims': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear una Solicitud Interna de Material (SIM)
+            </p>
+            <p>
+                Las SIM gestionan los movimientos de stock interno desde el depósito central hacia las obras.
+            </p>
+        </field>
+    </record>
+
+</odoo>

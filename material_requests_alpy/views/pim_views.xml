@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- PIM: TREE / LIST VIEW                                        -->
+    <!-- ============================================================ -->
+    <record id="view_pim_list" model="ir.ui.view">
+        <field name="name">material.request.pim.list</field>
+        <field name="model">material.request.pim</field>
+        <field name="arch" type="xml">
+            <list string="Pedidos Internos de Material (PIM)"
+                   decoration-success="state == 'closed'"
+                   decoration-muted="state == 'canceled'"
+                   decoration-info="state in ('quotation', 'po_issued')"
+                   decoration-warning="state == 'received'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="sim_id" optional="show"/>
+                <field name="priority" widget="priority"/>
+                <field name="date_request"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'closed'"
+                       decoration-info="state in ('quotation', 'po_issued')"
+                       decoration-warning="state == 'received'"
+                       decoration-muted="state == 'canceled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- PIM: FORM VIEW                                               -->
+    <!-- ============================================================ -->
+    <record id="view_pim_form" model="ir.ui.view">
+        <field name="name">material.request.pim.form</field>
+        <field name="model">material.request.pim</field>
+        <field name="arch" type="xml">
+            <form string="Pedido Interno de Material (PIM)">
+                <header>
+                    <button name="action_send_quotation" string="Enviar a Cotización"
+                            type="object" class="btn-primary"
+                            invisible="state != 'requested'"
+                            groups="material_requests_alpy.group_purchasing"/>
+                    <button name="action_issue_po" string="Orden de Compra Emitida"
+                            type="object" class="btn-primary"
+                            invisible="state != 'quotation'"
+                            groups="material_requests_alpy.group_purchasing"/>
+                    <button name="action_receive" string="Ingresado a Depósito"
+                            type="object" class="btn-primary"
+                            invisible="state != 'po_issued'"
+                            groups="material_requests_alpy.group_purchasing,material_requests_alpy.group_logistics"/>
+                    <button name="action_close" string="Cerrar"
+                            type="object" class="btn-success"
+                            invisible="state != 'received'"
+                            groups="material_requests_alpy.group_obra_manager"/>
+                    <button name="action_cancel" string="Anular"
+                            type="object" class="btn-danger"
+                            invisible="state in ('closed', 'canceled')"/>
+                    <button name="action_reset_draft" string="Volver a Solicitado"
+                            type="object"
+                            invisible="state != 'canceled'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="requested,quotation,po_issued,received,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_purchase_orders" type="object"
+                                class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="purchase_order_count == 0">
+                            <field name="purchase_order_count" widget="statinfo" string="Órdenes de Compra"/>
+                        </button>
+                        <button name="action_view_sim" type="object"
+                                class="oe_stat_button" icon="fa-link"
+                                invisible="not sim_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Ver SIM</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Información General">
+                            <field name="project_id"
+                                   readonly="state != 'requested'"/>
+                            <field name="sim_id"
+                                   options="{'no_create': True}"
+                                   readonly="state != 'requested'"/>
+                            <field name="priority" widget="priority"/>
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                        </group>
+                        <group string="Fechas">
+                            <field name="date_request"/>
+                            <field name="date_quotation"
+                                   invisible="not date_quotation"/>
+                            <field name="date_po_issued"
+                                   invisible="not date_po_issued"/>
+                            <field name="date_received"
+                                   invisible="not date_received"/>
+                            <field name="date_closed"
+                                   invisible="not date_closed"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Ítems de Material" name="items">
+                            <field name="line_ids"
+                                   readonly="state not in ('requested',)">
+                                <list editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="product_category_id" readonly="1" optional="hide"/>
+                                    <field name="uom_id" readonly="1"/>
+                                    <field name="qty_requested"/>
+                                    <field name="notes"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Justificación" name="justification">
+                            <field name="justification"
+                                   placeholder="Justificación detallada del pedido (obligatorio)..."
+                                   readonly="state != 'requested'"/>
+                        </page>
+                        <page string="Adjuntos" name="attachments">
+                            <field name="attachment_ids" widget="many2many_binary"
+                                   string="Presupuestos / Fotos de Referencia"/>
+                        </page>
+                        <page string="Notas" name="notes">
+                            <field name="notes" placeholder="Notas adicionales..."
+                                   readonly="state not in ('requested',)"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- PIM: SEARCH VIEW                                             -->
+    <!-- ============================================================ -->
+    <record id="view_pim_search" model="ir.ui.view">
+        <field name="name">material.request.pim.search</field>
+        <field name="model">material.request.pim</field>
+        <field name="arch" type="xml">
+            <search string="Buscar PIM">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="user_id"/>
+                <field name="sim_id"/>
+                <filter string="Mis PIMs" name="my_pims"
+                        domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Solicitado" name="requested"
+                        domain="[('state', '=', 'requested')]"/>
+                <filter string="En Cotización" name="quotation"
+                        domain="[('state', '=', 'quotation')]"/>
+                <filter string="OC Emitida" name="po_issued"
+                        domain="[('state', '=', 'po_issued')]"/>
+                <filter string="Ingresado" name="received"
+                        domain="[('state', '=', 'received')]"/>
+                <filter string="Cerrado" name="closed"
+                        domain="[('state', '=', 'closed')]"/>
+                <filter string="Anulado" name="canceled"
+                        domain="[('state', '=', 'canceled')]"/>
+                <separator/>
+                <filter string="Prioridad CRÍTICA" name="critical"
+                        domain="[('priority', '=', '3')]"/>
+                <filter string="Prioridad Alta" name="high"
+                        domain="[('priority', '=', '2')]"/>
+                <separator/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Obra" name="group_project"
+                            context="{'group_by': 'project_id'}"/>
+                    <filter string="Estado" name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Prioridad" name="group_priority"
+                            context="{'group_by': 'priority'}"/>
+                    <filter string="Solicitante" name="group_user"
+                            context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- PIM: ACTIONS                                                 -->
+    <!-- ============================================================ -->
+    <record id="action_pim_list" model="ir.actions.act_window">
+        <field name="name">Pedidos Internos (PIM)</field>
+        <field name="res_model">material.request.pim</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_pim_search"/>
+        <field name="context">{'search_default_my_pims': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear un Pedido Interno de Material (PIM)
+            </p>
+            <p>
+                Los PIM gestionan las solicitudes de compra externa de materiales para las obras.
+            </p>
+        </field>
+    </record>
+
+</odoo>
