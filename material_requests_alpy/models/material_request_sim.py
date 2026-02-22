@@ -221,6 +221,11 @@ class MaterialRequestSIMLine(models.Model):
         required=True,
         ondelete='cascade',
     )
+    state = fields.Selection(
+        related='sim_id.state',
+        string='Estado SIM',
+        store=False,
+    )
     product_id = fields.Many2one(
         'product.product',
         string='Material',

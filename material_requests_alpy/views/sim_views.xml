@@ -115,6 +115,7 @@
                                        decoration-danger="stock_status == 'none'"
                                        decoration-warning="stock_status == 'partial'"
                                        decoration-success="stock_status == 'ok'">
+                                    <field name="state" column_invisible="True"/>
                                     <field name="product_id"/>
                                     <field name="product_category_id" readonly="1" optional="hide"/>
                                     <field name="uom_id" readonly="1"/>
