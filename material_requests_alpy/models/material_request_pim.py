@@ -241,7 +241,7 @@ class MaterialRequestPIM(models.Model):
                     'product_uom': line.uom_id.id,
                     'location_id': self.location_id.id,
                     'location_dest_id': location_dest_id,
-                    'description_picking': line.notes or self.name,
+                    'description_picking': self.name,
                 }))
 
         if not picking_vals['move_ids']:

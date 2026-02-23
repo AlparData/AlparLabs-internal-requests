@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_purchase_order_form_inherit_material_requests" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.material.requests</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="%(material_requests_alpy.action_sim_list)d"
+                        type="action"
+                        class="oe_stat_button"
+                        icon="fa-shopping-cart"
+                        invisible="not sim_id"
+                        context="{'search_default_id': sim_id}">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Ver SIM</span>
+                    </div>
+                </button>
+            </div>
+            <!-- Optionally show the sim_id field -->
+            <field name="origin" position="after">
+                <field name="sim_id" readonly="1" invisible="not sim_id"/>
+            </field>
+        </field>
+    </record>
+</odoo>
