@@ -9,20 +9,21 @@
         <field name="model">material.request.pim</field>
         <field name="arch" type="xml">
             <list string="Pedidos Internos de Material (PIM)"
-                   decoration-success="state == 'closed'"
+                   decoration-danger="state == 'pending_stock'"
+                   decoration-success="state == 'delivered'"
                    decoration-muted="state == 'canceled'"
-                   decoration-info="state in ('quotation', 'po_issued')"
-                   decoration-warning="state == 'received'">
+                   decoration-warning="state == 'pending_approval'"
+                   decoration-info="state == 'shipped'">
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="user_id" widget="many2one_avatar_user"/>
-                <field name="sim_id" optional="show"/>
-                <field name="priority" widget="priority"/>
+                <field name="location_id"/>
                 <field name="date_request"/>
                 <field name="state" widget="badge"
-                       decoration-success="state == 'closed'"
-                       decoration-info="state in ('quotation', 'po_issued')"
-                       decoration-warning="state == 'received'"
+                       decoration-danger="state == 'pending_stock'"
+                       decoration-success="state == 'delivered'"
+                       decoration-warning="state == 'pending_approval'"
+                       decoration-info="state in ('shipped', 'approved')"
                        decoration-muted="state == 'canceled'"/>
             </list>
         </field>
@@ -37,44 +38,45 @@
         <field name="arch" type="xml">
             <form string="Pedido Interno de Material (PIM)">
                 <header>
-                    <button name="action_send_quotation" string="Enviar a Cotización"
+                    <!-- State transition buttons -->
+                    <button name="action_submit" string="Enviar a Aprobación"
                             type="object" class="btn-primary"
-                            invisible="state != 'requested'"
-                            groups="material_requests_alpy.group_purchasing"/>
-                    <button name="action_issue_po" string="Orden de Compra Emitida"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Aprobar"
                             type="object" class="btn-primary"
-                            invisible="state != 'quotation'"
-                            groups="material_requests_alpy.group_purchasing"/>
-                    <button name="action_receive" string="Ingresado a Depósito"
-                            type="object" class="btn-primary"
-                            invisible="state != 'po_issued'"
-                            groups="material_requests_alpy.group_purchasing,material_requests_alpy.group_logistics"/>
-                    <button name="action_close" string="Cerrar"
-                            type="object" class="btn-success"
-                            invisible="state != 'received'"
+                            invisible="state != 'pending_approval'"
                             groups="material_requests_alpy.group_obra_manager"/>
+                    <button name="action_force_approve" string="Aprobar (Forzar)"
+                            type="object" class="btn-warning"
+                            invisible="state != 'pending_stock'"
+                            groups="material_requests_alpy.group_obra_manager"/>
+                    <button name="action_ship" string="Marcar como Despachado"
+                            type="object" class="btn-primary"
+                            invisible="state != 'approved'"
+                            groups="material_requests_alpy.group_logistics"/>
+                    <button name="action_deliver" string="Marcar como Entregado"
+                            type="object" class="btn-primary"
+                            invisible="state != 'shipped'"
+                            groups="material_requests_alpy.group_logistics"/>
                     <button name="action_cancel" string="Anular"
                             type="object" class="btn-danger"
-                            invisible="state in ('closed', 'canceled')"/>
-                    <button name="action_reset_draft" string="Volver a Solicitado"
+                            invisible="state in ('delivered', 'canceled')"/>
+                    <button name="action_reset_draft" string="Volver a Borrador"
                             type="object"
                             invisible="state != 'canceled'"/>
+                    <!-- Quick SIM creation button -->
+                    <button name="action_create_sim" string="🛒 Crear SIM Referenciada"
+                            type="object" class="btn-warning"
+                            invisible="state != 'pending_stock'"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="requested,quotation,po_issued,received,closed"/>
+                           statusbar_visible="draft,pending_approval,approved,shipped,delivered"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_purchase_orders" type="object"
-                                class="oe_stat_button" icon="fa-file-text-o"
-                                invisible="purchase_order_count == 0">
-                            <field name="purchase_order_count" widget="statinfo" string="Órdenes de Compra"/>
-                        </button>
-                        <button name="action_view_sim" type="object"
-                                class="oe_stat_button" icon="fa-link"
-                                invisible="not sim_id">
-                            <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Ver SIM</span>
-                            </div>
+                        <button name="action_view_sims" type="object"
+                                class="oe_stat_button" icon="fa-shopping-cart"
+                                invisible="sim_count == 0">
+                            <field name="sim_count" widget="statinfo" string="SIMs"/>
                         </button>
                     </div>
                     <div class="oe_title">
@@ -85,50 +87,51 @@
                     <group>
                         <group string="Información General">
                             <field name="project_id"
-                                   readonly="state != 'requested'"/>
-                            <field name="sim_id"
-                                   options="{'no_create': True}"
-                                   readonly="state != 'requested'"/>
-                            <field name="priority" widget="priority"/>
+                                   readonly="state != 'draft'"/>
+                            <field name="location_id"
+                                   readonly="state != 'draft'"/>
                             <field name="user_id" widget="many2one_avatar_user"/>
                         </group>
                         <group string="Fechas">
                             <field name="date_request"/>
-                            <field name="date_quotation"
-                                   invisible="not date_quotation"/>
-                            <field name="date_po_issued"
-                                   invisible="not date_po_issued"/>
-                            <field name="date_received"
-                                   invisible="not date_received"/>
-                            <field name="date_closed"
-                                   invisible="not date_closed"/>
+                            <field name="date_approved"
+                                   invisible="not date_approved"/>
+                            <field name="date_shipped"
+                                   invisible="not date_shipped"/>
+                            <field name="date_delivered"
+                                   invisible="not date_delivered"/>
                         </group>
                     </group>
+                    <!-- Stock warning banner -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not has_stock_issues">
+                        <strong>⚠️ Atención:</strong> Algunos materiales no tienen stock suficiente en el depósito seleccionado.
+                    </div>
                     <notebook>
                         <page string="Ítems de Material" name="items">
-                            <field name="line_ids"
-                                   readonly="state not in ('requested',)">
-                                <list editable="bottom">
-                                    <field name="product_id"/>
+                            <field name="line_ids">
+                                <list editable="bottom"
+                                       decoration-danger="stock_status == 'none'"
+                                       decoration-warning="stock_status == 'partial'"
+                                       decoration-success="stock_status == 'ok'">
+                                    <field name="state" column_invisible="True"/>
+                                    <field name="product_id" readonly="state not in ('draft', 'pending_approval')"/>
                                     <field name="product_category_id" readonly="1" optional="hide"/>
                                     <field name="uom_id" readonly="1"/>
-                                    <field name="qty_requested"/>
-                                    <field name="notes"/>
+                                    <field name="qty_requested" readonly="state not in ('draft', 'pending_approval')"/>
+                                    <field name="qty_shipped"
+                                           readonly="state not in ('approved', 'shipped')"/>
+                                    <field name="stock_available" readonly="1"/>
+                                    <field name="stock_status" widget="badge"
+                                           decoration-danger="stock_status == 'none'"
+                                           decoration-warning="stock_status == 'partial'"
+                                           decoration-success="stock_status == 'ok'"
+                                           readonly="1"/>
                                 </list>
                             </field>
                         </page>
-                        <page string="Justificación" name="justification">
-                            <field name="justification"
-                                   placeholder="Justificación detallada del pedido (obligatorio)..."
-                                   readonly="state != 'requested'"/>
-                        </page>
-                        <page string="Adjuntos" name="attachments">
-                            <field name="attachment_ids" widget="many2many_binary"
-                                   string="Presupuestos / Fotos de Referencia"/>
-                        </page>
                         <page string="Notas" name="notes">
-                            <field name="notes" placeholder="Notas adicionales..."
-                                   readonly="state not in ('requested',)"/>
+                            <field name="notes" placeholder="Notas adicionales..."/>
                         </page>
                     </notebook>
                 </sheet>
@@ -148,37 +151,34 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="user_id"/>
-                <field name="sim_id"/>
+                <field name="location_id"/>
                 <filter string="Mis PIMs" name="my_pims"
                         domain="[('user_id', '=', uid)]"/>
                 <separator/>
-                <filter string="Solicitado" name="requested"
-                        domain="[('state', '=', 'requested')]"/>
-                <filter string="En Cotización" name="quotation"
-                        domain="[('state', '=', 'quotation')]"/>
-                <filter string="OC Emitida" name="po_issued"
-                        domain="[('state', '=', 'po_issued')]"/>
-                <filter string="Ingresado" name="received"
-                        domain="[('state', '=', 'received')]"/>
-                <filter string="Cerrado" name="closed"
-                        domain="[('state', '=', 'closed')]"/>
+                <filter string="Borrador" name="draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter string="Pendientes de Aprobación" name="pending_approval"
+                        domain="[('state', '=', 'pending_approval')]"/>
+                <filter string="Pendiente de Stock" name="pending_stock"
+                        domain="[('state', '=', 'pending_stock')]"/>
+                <filter string="Aprobado" name="approved"
+                        domain="[('state', '=', 'approved')]"/>
+                <filter string="Despachado" name="shipped"
+                        domain="[('state', '=', 'shipped')]"/>
+                <filter string="Entregado" name="delivered"
+                        domain="[('state', '=', 'delivered')]"/>
                 <filter string="Anulado" name="canceled"
                         domain="[('state', '=', 'canceled')]"/>
-                <separator/>
-                <filter string="Prioridad CRÍTICA" name="critical"
-                        domain="[('priority', '=', '3')]"/>
-                <filter string="Prioridad Alta" name="high"
-                        domain="[('priority', '=', '2')]"/>
                 <separator/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Obra" name="group_project"
                             context="{'group_by': 'project_id'}"/>
                     <filter string="Estado" name="group_state"
                             context="{'group_by': 'state'}"/>
-                    <filter string="Prioridad" name="group_priority"
-                            context="{'group_by': 'priority'}"/>
                     <filter string="Solicitante" name="group_user"
                             context="{'group_by': 'user_id'}"/>
+                    <filter string="Depósito" name="group_location"
+                            context="{'group_by': 'location_id'}"/>
                 </group>
             </search>
         </field>
@@ -198,7 +198,7 @@
                 Crear un Pedido Interno de Material (PIM)
             </p>
             <p>
-                Los PIM gestionan las solicitudes de compra externa de materiales para las obras.
+                Los PIM gestionan los movimientos de stock interno desde el depósito central hacia las obras.
             </p>
         </field>
     </record>

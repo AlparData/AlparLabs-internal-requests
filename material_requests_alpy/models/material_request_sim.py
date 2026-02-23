@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError
 
 
 class MaterialRequestSIM(models.Model):
@@ -22,26 +22,33 @@ class MaterialRequestSIM(models.Model):
         string='Obra / Centro de Costo',
         required=True,
         tracking=True,
-        states={'draft': [('readonly', False)]},
-        readonly=True,
+    )
+    pim_id = fields.Many2one(
+        'material.request.pim',
+        string='Referencia PIM',
+        help='Vínculo informativo a un PIM existente. No es vinculante.',
+        tracking=True,
     )
     state = fields.Selection([
-        ('draft', 'Borrador'),
-        ('pending_approval', 'Pendiente de Aprobación'),
-        ('pending_stock', 'Pendiente de Stock'),
-        ('approved', 'Aprobado'),
-        ('shipped', 'Despachado'),
-        ('delivered', 'Entregado'),
+        ('requested', 'Solicitado'),
+        ('quotation', 'En Cotización'),
+        ('po_issued', 'Orden de Compra Emitida'),
+        ('received', 'Ingresado a Depósito'),
+        ('closed', 'Cerrado'),
         ('canceled', 'Anulado'),
-    ], string='Estado', default='draft', tracking=True, copy=False)
+    ], string='Estado', default='requested', tracking=True, copy=False)
 
-    location_id = fields.Many2one(
-        'stock.location',
-        string='Depósito Emisor',
-        domain="[('usage', '=', 'internal')]",
+    priority = fields.Selection([
+        ('0', 'Baja'),
+        ('1', 'Media'),
+        ('2', 'Alta'),
+        ('3', 'CRÍTICA'),
+    ], string='Prioridad', default='1', tracking=True)
+
+    justification = fields.Text(
+        string='Justificación',
         required=True,
-        states={'draft': [('readonly', False)]},
-        readonly=True,
+        help='Justificación obligatoria de la solicitud de compra de material.',
     )
     line_ids = fields.One2many(
         'material.request.sim.line',
@@ -61,51 +68,53 @@ class MaterialRequestSIM(models.Model):
         default=fields.Datetime.now,
         readonly=True,
     )
-    date_approved = fields.Datetime(
-        string='Fecha de Aprobación',
+    date_quotation = fields.Datetime(
+        string='Fecha de Cotización',
         readonly=True,
     )
-    date_shipped = fields.Datetime(
-        string='Fecha de Despacho',
+    date_po_issued = fields.Datetime(
+        string='Fecha de OC',
         readonly=True,
     )
-    date_delivered = fields.Datetime(
-        string='Fecha de Entrega',
+    date_received = fields.Datetime(
+        string='Fecha de Ingreso',
+        readonly=True,
+    )
+    date_closed = fields.Datetime(
+        string='Fecha de Cierre',
         readonly=True,
     )
     notes = fields.Text(string='Notas')
-    has_stock_issues = fields.Boolean(
-        string='Tiene Problemas de Stock',
-        compute='_compute_has_stock_issues',
-        store=True,
+
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'sim_attachment_rel',
+        'sim_id',
+        'attachment_id',
+        string='Adjuntos',
+        help='Presupuestos, fotos de referencia u otros documentos.',
     )
 
-    # ----- Smart Button counts -----
-    pim_ids = fields.One2many(
-        'material.request.pim',
+    # ----- Smart Button: linked purchase orders -----
+    purchase_order_ids = fields.Many2many(
+        'purchase.order',
+        'sim_purchase_order_rel',
         'sim_id',
-        string='PIMs Vinculadas',
+        'purchase_order_id',
+        string='Órdenes de Compra',
     )
-    pim_count = fields.Integer(
-        string='Cantidad de PIMs',
-        compute='_compute_pim_count',
+    purchase_order_count = fields.Integer(
+        string='Cantidad OC',
+        compute='_compute_purchase_order_count',
     )
 
     # =====================================================================
     # COMPUTE
     # =====================================================================
-    @api.depends('pim_ids')
-    def _compute_pim_count(self):
+    @api.depends('purchase_order_ids')
+    def _compute_purchase_order_count(self):
         for rec in self:
-            rec.pim_count = len(rec.pim_ids)
-
-    @api.depends('line_ids.stock_available', 'line_ids.qty_requested')
-    def _compute_has_stock_issues(self):
-        for rec in self:
-            rec.has_stock_issues = any(
-                line.stock_available < line.qty_requested
-                for line in rec.line_ids
-            )
+            rec.purchase_order_count = len(rec.purchase_order_ids)
 
     # =====================================================================
     # CRUD
@@ -117,97 +126,80 @@ class MaterialRequestSIM(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'material.request.sim'
                 ) or _('New')
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        for rec in records:
+            if rec.pim_id:
+                rec.pim_id.message_post(
+                    body=f"Se ha generado la Solicitud Interna de Compra vinculada: <a href='#' data-oe-model='material.request.sim' data-oe-id='{rec.id}'>{rec.name}</a>"
+                )
+        return records
 
     # =====================================================================
     # STATE TRANSITIONS
     # =====================================================================
-    def action_submit(self):
-        """Borrador -> Pendiente de Aprobación"""
+    def action_send_quotation(self):
+        """Solicitado -> En Cotización"""
         for rec in self:
             if not rec.line_ids:
                 raise UserError(_('Debe agregar al menos un ítem de material.'))
-            rec.state = 'pending_approval'
+            if not rec.justification:
+                raise UserError(_('La justificación es obligatoria.'))
+            rec.date_quotation = fields.Datetime.now()
+            rec.state = 'quotation'
 
-    def action_approve(self):
-        """Pendiente de Aprobación -> Aprobado o Pendiente de Stock"""
+    def action_issue_po(self):
+        """En Cotización -> Orden de Compra Emitida"""
         for rec in self:
-            rec.date_approved = fields.Datetime.now()
-            if rec.has_stock_issues:
-                rec.state = 'pending_stock'
-            else:
-                rec.state = 'approved'
+            rec.date_po_issued = fields.Datetime.now()
+            rec.state = 'po_issued'
 
-    def action_force_approve(self):
-        """Pendiente de Stock -> Aprobado (forzar aprobación sin stock completo)"""
+    def action_receive(self):
+        """Orden de Compra Emitida -> Ingresado a Depósito"""
         for rec in self:
-            rec.state = 'approved'
+            rec.date_received = fields.Datetime.now()
+            rec.state = 'received'
 
-    def action_ship(self):
-        """Aprobado -> Despachado"""
+    def action_close(self):
+        """Ingresado a Depósito -> Cerrado"""
         for rec in self:
-            rec.date_shipped = fields.Datetime.now()
-            rec.state = 'shipped'
-
-    def action_deliver(self):
-        """Despachado -> Entregado"""
-        for rec in self:
-            rec.date_delivered = fields.Datetime.now()
-            rec.state = 'delivered'
+            rec.date_closed = fields.Datetime.now()
+            rec.state = 'closed'
 
     def action_cancel(self):
         """Cualquier estado -> Anulado"""
         for rec in self:
-            if rec.state == 'delivered':
-                raise UserError(_('No se puede anular una SIM ya entregada.'))
+            if rec.state == 'closed':
+                raise UserError(_('No se puede anular un SIM ya cerrado.'))
             rec.state = 'canceled'
 
     def action_reset_draft(self):
-        """Anulado -> Borrador"""
+        """Anulado -> Solicitado"""
         for rec in self:
-            rec.state = 'draft'
+            rec.state = 'requested'
 
     # =====================================================================
     # SMART BUTTONS
     # =====================================================================
-    def action_view_pims(self):
+    def action_view_purchase_orders(self):
         self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('purchase.purchase_form_action')
+        if self.purchase_order_count == 1:
+            action['views'] = [(False, 'form')]
+            action['res_id'] = self.purchase_order_ids[0].id
+        else:
+            action['domain'] = [('id', 'in', self.purchase_order_ids.ids)]
+        return action
+
+    def action_view_pim(self):
+        self.ensure_one()
+        if not self.pim_id:
+            return
         return {
             'type': 'ir.actions.act_window',
-            'name': _('PIMs Vinculadas'),
-            'res_model': 'material.request.pim',
-            'view_mode': 'list,form',
-            'domain': [('sim_id', '=', self.id)],
-            'context': {'default_sim_id': self.id, 'default_project_id': self.project_id.id},
-        }
-
-    def action_create_pim(self):
-        """Crear PIM referenciada desde SIM en estado Pendiente de Stock, precargando materiales faltantes."""
-        self.ensure_one()
-        if self.state != 'pending_stock':
-            raise UserError(_('Solo puede crear una PIM desde una SIM en estado "Pendiente de Stock".'))
-
-        pim_lines = []
-        for line in self.line_ids:
-            missing_qty = line.qty_requested - line.stock_available
-            if missing_qty > 0:
-                pim_lines.append((0, 0, {
-                    'product_id': line.product_id.id,
-                    'qty_requested': missing_qty,
-                    'uom_id': line.uom_id.id,
-                }))
-
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Crear PIM Referenciada'),
+            'name': _('PIM Vinculado'),
             'res_model': 'material.request.pim',
             'view_mode': 'form',
-            'context': {
-                'default_project_id': self.project_id.id,
-                'default_sim_id': self.id,
-                'default_line_ids': pim_lines,
-            },
-            'target': 'current',
+            'res_id': self.pim_id.id,
         }
 
 
@@ -220,11 +212,6 @@ class MaterialRequestSIMLine(models.Model):
         string='SIM',
         required=True,
         ondelete='cascade',
-    )
-    state = fields.Selection(
-        related='sim_id.state',
-        string='Estado SIM',
-        store=False,
     )
     product_id = fields.Many2one(
         'product.product',
@@ -247,37 +234,4 @@ class MaterialRequestSIMLine(models.Model):
         required=True,
         default=1.0,
     )
-    qty_shipped = fields.Float(
-        string='Cantidad Despachada',
-        default=0.0,
-    )
-    stock_available = fields.Float(
-        string='Stock Disponible',
-        compute='_compute_stock_available',
-        store=False,
-    )
-    stock_status = fields.Selection([
-        ('ok', 'Disponible'),
-        ('partial', 'Parcial'),
-        ('none', 'Sin Stock'),
-    ], string='Estado de Stock', compute='_compute_stock_available')
-
-    @api.depends('product_id', 'qty_requested', 'sim_id.location_id')
-    def _compute_stock_available(self):
-        for line in self:
-            if line.product_id and line.sim_id.location_id:
-                quant = self.env['stock.quant'].search([
-                    ('product_id', '=', line.product_id.id),
-                    ('location_id', '=', line.sim_id.location_id.id),
-                ], limit=1)
-                line.stock_available = quant.quantity if quant else 0.0
-            else:
-                line.stock_available = 0.0
-
-            # Determine status
-            if line.stock_available >= line.qty_requested:
-                line.stock_status = 'ok'
-            elif line.stock_available > 0:
-                line.stock_status = 'partial'
-            else:
-                line.stock_status = 'none'
+    notes = fields.Char(string='Notas')

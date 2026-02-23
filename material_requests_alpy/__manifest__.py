@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Gestión de Abastecimiento (SIM / PIM)',
-    'version': '18.0.1.0.1',
+    'version': '18.0.2.0.0',
     'category': 'Inventory/Purchase',
     'summary': 'Solicitudes Internas de Material (SIM) y Pedidos Internos de Material (PIM)',
     'description': """

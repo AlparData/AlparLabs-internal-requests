@@ -15,48 +15,40 @@
         <!-- SECURITY GROUPS                                              -->
         <!-- ============================================================ -->
 
-        <!-- Usuario de Obra: Puede crear SIM y PIM, solo ve sus propios pedidos -->
+        <!-- Usuario de Obra: Puede crear PIM y SIM -->
         <record id="group_obra_user" model="res.groups">
             <field name="name">Usuario de Obra</field>
             <field name="category_id" ref="module_category_material_requests"/>
-            <field name="comment">Puede crear SIM y PIM. Solo ve sus propios pedidos.</field>
+            <field name="comment">Puede crear PIM y SIM. Solo ve sus propios registros.</field>
         </record>
 
-        <!-- Jefe de Obra / Gerencia: Aprueba o Rechaza SIMs y PIMs -->
+        <!-- Jefe de Obra / Gerencia: Aprueba o Rechaza PIMs y SIMs -->
         <record id="group_obra_manager" model="res.groups">
             <field name="name">Jefe de Obra / Gerencia</field>
             <field name="category_id" ref="module_category_material_requests"/>
             <field name="implied_ids" eval="[(4, ref('group_obra_user'))]"/>
-            <field name="comment">Aprueba o rechaza SIMs y PIMs. Ve todos los registros.</field>
+            <field name="comment">Aprueba o rechaza PIMs y SIMs. Ve todos los registros.</field>
         </record>
 
-        <!-- Logística (Pañol): Gestiona estados de SIM (Despacho/Entrega) -->
+        <!-- Logística (Pañol): Gestiona estados de PIM (Despacho/Entrega) y crea SIMs -->
         <record id="group_logistics" model="res.groups">
             <field name="name">Logística (Pañol)</field>
             <field name="category_id" ref="module_category_material_requests"/>
             <field name="implied_ids" eval="[(4, ref('group_obra_user'))]"/>
-            <field name="comment">Gestiona los estados de la SIM (Despachado/Entregado).</field>
+            <field name="comment">Gestiona los estados del PIM (Despachado/Entregado) y solicita compras mediante SIM.</field>
         </record>
 
-        <!-- Compras: Gestiona estados de PIM (Cotización/OC) -->
+        <!-- Compras: Gestiona estados de SIM (Cotización/OC) -->
         <record id="group_purchasing" model="res.groups">
             <field name="name">Compras</field>
             <field name="category_id" ref="module_category_material_requests"/>
             <field name="implied_ids" eval="[(4, ref('group_obra_user'))]"/>
-            <field name="comment">Gestiona los estados de la PIM (Cotización/Orden de Compra).</field>
+            <field name="comment">Gestiona los estados de la SIM (Cotización/Orden de Compra).</field>
         </record>
 
         <!-- ============================================================ -->
         <!-- RECORD RULES                                                 -->
         <!-- ============================================================ -->
-
-        <!-- Usuario de Obra: Solo sus propios registros SIM -->
-        <record id="rule_sim_obra_user" model="ir.rule">
-            <field name="name">SIM: Solo mis registros</field>
-            <field name="model_id" ref="model_material_request_sim"/>
-            <field name="domain_force">[('user_id', '=', user.id)]</field>
-            <field name="groups" eval="[(4, ref('group_obra_user'))]"/>
-        </record>
 
         <!-- Usuario de Obra: Solo sus propios registros PIM -->
         <record id="rule_pim_obra_user" model="ir.rule">
@@ -66,12 +58,12 @@
             <field name="groups" eval="[(4, ref('group_obra_user'))]"/>
         </record>
 
-        <!-- Jefe de Obra: Ve todos los registros SIM -->
-        <record id="rule_sim_obra_manager" model="ir.rule">
-            <field name="name">SIM: Todos los registros (Gerencia)</field>
+        <!-- Usuario de Obra: Solo sus propios registros SIM -->
+        <record id="rule_sim_obra_user" model="ir.rule">
+            <field name="name">SIM: Solo mis registros</field>
             <field name="model_id" ref="model_material_request_sim"/>
-            <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('group_obra_manager'))]"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_obra_user'))]"/>
         </record>
 
         <!-- Jefe de Obra: Ve todos los registros PIM -->
@@ -82,18 +74,26 @@
             <field name="groups" eval="[(4, ref('group_obra_manager'))]"/>
         </record>
 
-        <!-- Logística: Ve todos los SIM -->
-        <record id="rule_sim_logistics" model="ir.rule">
-            <field name="name">SIM: Todos los registros (Logística)</field>
+        <!-- Jefe de Obra: Ve todos los registros SIM -->
+        <record id="rule_sim_obra_manager" model="ir.rule">
+            <field name="name">SIM: Todos los registros (Gerencia)</field>
             <field name="model_id" ref="model_material_request_sim"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_obra_manager'))]"/>
+        </record>
+
+        <!-- Logística: Ve todos los PIM -->
+        <record id="rule_pim_logistics" model="ir.rule">
+            <field name="name">PIM: Todos los registros (Logística)</field>
+            <field name="model_id" ref="model_material_request_pim"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_logistics'))]"/>
         </record>
 
-        <!-- Compras: Ve todos los PIM -->
-        <record id="rule_pim_purchasing" model="ir.rule">
-            <field name="name">PIM: Todos los registros (Compras)</field>
-            <field name="model_id" ref="model_material_request_pim"/>
+        <!-- Compras: Ve todos los SIM -->
+        <record id="rule_sim_purchasing" model="ir.rule">
+            <field name="name">SIM: Todos los registros (Compras)</field>
+            <field name="model_id" ref="model_material_request_sim"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_purchasing'))]"/>
         </record>

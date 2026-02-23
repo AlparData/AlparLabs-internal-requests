@@ -13,16 +13,16 @@
     <!-- ============================================================ -->
     <!-- SUB-MENUS                                                    -->
     <!-- ============================================================ -->
-    <menuitem id="menu_sim"
-              name="Solicitudes Internas (SIM)"
-              parent="menu_material_requests_root"
-              action="action_sim_list"
-              sequence="10"/>
-
     <menuitem id="menu_pim"
-              name="Pedidos Internos (PIM)"
+              name="Pedidos Internos (PIM) - Obra"
               parent="menu_material_requests_root"
               action="action_pim_list"
+              sequence="10"/>
+
+    <menuitem id="menu_sim"
+              name="Solicitudes Internas (SIM) - Compras"
+              parent="menu_material_requests_root"
+              action="action_sim_list"
               sequence="20"/>
 
 </odoo>
