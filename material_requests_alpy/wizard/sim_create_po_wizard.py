@@ -19,6 +19,7 @@ class SimCreatePoWizard(models.TransientModel):
         po_vals = {
             'partner_id': self.partner_id.id,
             'sim_id': sim.id,
+            'project_id': sim.project_id.id,
             'origin': sim.name,
             'order_line': [],
         }
@@ -29,7 +30,7 @@ class SimCreatePoWizard(models.TransientModel):
                 'product_id': line.product_id.id,
                 'product_qty': line.qty_requested,
                 'product_uom': line.uom_id.id,
-                'date_planned': fields.Datetime.now(),
+                'date_planned': fields.Datetime.to_datetime(sim.date_required),
             }))
 
         po = self.env['purchase.order'].create(po_vals)

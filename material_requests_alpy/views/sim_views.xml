@@ -18,7 +18,8 @@
                 <field name="user_id" widget="many2one_avatar_user"/>
                 <field name="pim_id" optional="show"/>
                 <field name="priority" widget="priority"/>
-                <field name="date_request"/>
+                <field name="date_request" optional="hide"/>
+                <field name="date_required"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'closed'"
                        decoration-info="state in ('quotation', 'po_issued')"
@@ -101,6 +102,8 @@
                         </group>
                         <group string="Fechas">
                             <field name="date_request"/>
+                            <field name="date_required"
+                                   readonly="state != 'requested'"/>
                             <field name="date_quotation"
                                    invisible="not date_quotation"/>
                             <field name="date_po_issued"
@@ -156,6 +159,7 @@
                 <field name="project_id"/>
                 <field name="user_id"/>
                 <field name="pim_id"/>
+                <field name="date_required"/>
                 <filter string="Mis SIMs" name="my_sims"
                         domain="[('user_id', '=', uid)]"/>
                 <separator/>

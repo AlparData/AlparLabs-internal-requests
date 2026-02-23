@@ -57,6 +57,12 @@ class MaterialRequestPIM(models.Model):
         default=fields.Datetime.now,
         readonly=True,
     )
+    date_required = fields.Date(
+        string='Fecha Requerida',
+        required=True,
+        tracking=True,
+        help="Fecha para la que se necesitan los materiales en la obra.",
+    )
     date_approved = fields.Datetime(
         string='Fecha de Aprobación',
         readonly=True,
@@ -227,6 +233,8 @@ class MaterialRequestPIM(models.Model):
             'location_dest_id': location_dest_id,
             'origin': self.name,
             'pim_id': self.id,
+            'project_id': self.project_id.id,
+            'scheduled_date': fields.Datetime.to_datetime(self.date_required),
             'move_ids': [],
         }
 
@@ -369,8 +377,11 @@ class MaterialRequestPIMLine(models.Model):
             else:
                 line.stock_available = 0.0
 
-            # Determine status
-            if line.stock_available >= line.qty_requested:
+            # Determine status: Si ya se entregó todo lo solicitado, no está en falta de stock.
+            remaining = line.qty_requested - line.qty_shipped
+            if remaining <= 0:
+                line.stock_status = 'ok'
+            elif line.stock_available >= remaining:
                 line.stock_status = 'ok'
             elif line.stock_available > 0:
                 line.stock_status = 'partial'

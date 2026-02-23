@@ -68,6 +68,12 @@ class MaterialRequestSIM(models.Model):
         default=fields.Datetime.now,
         readonly=True,
     )
+    date_required = fields.Date(
+        string='Fecha Requerida',
+        required=True,
+        tracking=True,
+        help="Fecha para la que se necesitan los materiales en pañol/obra.",
+    )
     date_quotation = fields.Datetime(
         string='Fecha de Cotización',
         readonly=True,

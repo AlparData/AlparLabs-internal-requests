@@ -18,7 +18,8 @@
                 <field name="project_id"/>
                 <field name="user_id" widget="many2one_avatar_user"/>
                 <field name="location_id"/>
-                <field name="date_request"/>
+                <field name="date_request" optional="hide"/>
+                <field name="date_required"/>
                 <field name="state" widget="badge"
                        decoration-danger="state == 'pending_stock'"
                        decoration-success="state == 'delivered'"
@@ -105,6 +106,8 @@
                         </group>
                         <group string="Fechas">
                             <field name="date_request"/>
+                            <field name="date_required"
+                                   readonly="state != 'draft'"/>
                             <field name="date_approved"
                                    invisible="not date_approved"/>
                             <field name="date_shipped"
@@ -163,6 +166,7 @@
                 <field name="project_id"/>
                 <field name="user_id"/>
                 <field name="location_id"/>
+                <field name="date_required"/>
                 <filter string="Mis PIMs" name="my_pims"
                         domain="[('user_id', '=', uid)]"/>
                 <separator/>
