@@ -59,6 +59,13 @@
                     <button name="action_reset_draft" string="Volver a Solicitado"
                             type="object"
                             invisible="state != 'canceled'"/>
+                    
+                    <!-- Integración con Compras -->
+                    <button name="action_create_po_wizard" string="🧾 Crear Presupuesto (RFQ)"
+                            type="object" class="btn-primary"
+                            invisible="state not in ('requested', 'quotation')"
+                            groups="material_requests_alpy.group_purchasing"/>
+
                     <field name="state" widget="statusbar"
                            statusbar_visible="requested,quotation,po_issued,received,closed"/>
                 </header>

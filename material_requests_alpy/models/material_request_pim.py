@@ -76,7 +76,7 @@ class MaterialRequestPIM(models.Model):
         store=True,
     )
 
-    # ----- Smart Button counts -----
+    # ----- Smart Buttons -----
     sim_ids = fields.One2many(
         'material.request.sim',
         'pim_id',
@@ -86,6 +86,15 @@ class MaterialRequestPIM(models.Model):
         string='Cantidad de SIMs',
         compute='_compute_sim_count',
     )
+    picking_ids = fields.One2many(
+        'stock.picking',
+        'pim_id',
+        string='Transferencias',
+    )
+    picking_count = fields.Integer(
+        string='Cantidad de Transferencias',
+        compute='_compute_picking_count',
+    )
 
     # =====================================================================
     # COMPUTE
@@ -94,6 +103,11 @@ class MaterialRequestPIM(models.Model):
     def _compute_sim_count(self):
         for rec in self:
             rec.sim_count = len(rec.sim_ids)
+
+    @api.depends('picking_ids')
+    def _compute_picking_count(self):
+        for rec in self:
+            rec.picking_count = len(rec.picking_ids)
 
     @api.depends('line_ids.stock_available', 'line_ids.qty_requested')
     def _compute_has_stock_issues(self):
@@ -176,6 +190,74 @@ class MaterialRequestPIM(models.Model):
             'domain': [('pim_id', '=', self.id)],
             'context': {'default_pim_id': self.id, 'default_project_id': self.project_id.id},
         }
+
+    def action_view_pickings(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('stock.action_picking_tree_all')
+        if self.picking_count == 1:
+            action['views'] = [(False, 'form')]
+            action['res_id'] = self.picking_ids[0].id
+        else:
+            action['domain'] = [('id', 'in', self.picking_ids.ids)]
+            action['context'] = {'default_pim_id': self.id}
+        return action
+
+    def action_create_picking(self):
+        """Generar movimiento de inventario desde el PIM hacia la Obra"""
+        self.ensure_one()
+        if self.state not in ('approved', 'pending_stock'):
+            raise UserError(_('Solo se pueden generar transferencias si el PIM está Aprobado o Pendiente de Stock.'))
+
+        # Buscar el tipo de operación de Entrega relacionado al depósito emisor
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'outgoing'),
+            ('default_location_src_id', '=', self.location_id.id)
+        ], limit=1)
+        
+        if not picking_type:
+            # Si no hay un outgoing que salga de ese deposito, armamos uno genérico de salida
+            picking_type = self.env['stock.picking.type'].search([('code', '=', 'outgoing')], limit=1)
+
+        # Usar la ubicacion de destino por defecto o clientes
+        location_dest_id = picking_type.default_location_dest_id.id if picking_type and picking_type.default_location_dest_id else self.env.ref('stock.stock_location_customers').id
+
+        picking_vals = {
+            'picking_type_id': picking_type.id if picking_type else False,
+            'location_id': self.location_id.id,
+            'location_dest_id': location_dest_id,
+            'origin': self.name,
+            'pim_id': self.id,
+            'move_ids': [],
+        }
+
+        for line in self.line_ids:
+            # Solo pedir lo que no se ha despachado aun
+            qty_to_ship = line.qty_requested - line.qty_shipped
+            if qty_to_ship > 0:
+                picking_vals['move_ids'].append((0, 0, {
+                    'name': line.product_id.name,
+                    'product_id': line.product_id.id,
+                    'product_uom_qty': qty_to_ship,
+                    'product_uom': line.uom_id.id,
+                    'location_id': self.location_id.id,
+                    'location_dest_id': location_dest_id,
+                    'description_picking': line.notes or self.name,
+                }))
+
+        if not picking_vals['move_ids']:
+            raise UserError(_('Todos los ítems ya han sido enviados o la cantidad a enviar es 0.'))
+
+        picking = self.env['stock.picking'].create(picking_vals)
+        picking.action_confirm()
+
+        # Notificar en el chatter
+        self.message_post(
+            body=f"Se ha generado una Transferencia de Inventario: <a href='#' data-oe-model='stock.picking' data-oe-id='{picking.id}'>{picking.name}</a>"
+        )
+        
+        # Opcional: pasar a status 'Despachado' automáticamente
+        if self.state == 'approved':
+            self.state = 'shipped'
 
     def action_create_sim(self):
         """Crear SIM referenciada desde PIM en estado Pendiente de Stock, precargando materiales faltantes."""

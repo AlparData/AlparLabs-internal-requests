@@ -202,6 +202,20 @@ class MaterialRequestSIM(models.Model):
             'res_id': self.pim_id.id,
         }
 
+    def action_create_po_wizard(self):
+        """Abre wizard para elegir proveedor y generar RFQ"""
+        self.ensure_one()
+        if self.state not in ('requested', 'quotation'):
+            raise UserError(_('Solo puede generar presupuestos en estado Solicitado o Cotización.'))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Crear Presupuesto de Compra'),
+            'res_model': 'sim.create.po.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_sim_id': self.id},
+        }
 
 class MaterialRequestSIMLine(models.Model):
     _name = 'material.request.sim.line'

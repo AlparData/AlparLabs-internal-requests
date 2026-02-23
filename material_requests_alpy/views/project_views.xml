@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Smart Buttons en Formulario de Proyecto -->
+    <record id="edit_project_inherit_material_requests" model="ir.ui.view">
+        <field name="name">project.project.inherit.material.requests</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button class="oe_stat_button" name="action_view_pims" type="object" icon="fa-cubes">
+                    <field name="pim_count" widget="statinfo" string="PIMs"/>
+                </button>
+                <button class="oe_stat_button" name="action_view_sims" type="object" icon="fa-shopping-cart">
+                    <field name="sim_count" widget="statinfo" string="SIMs"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <!-- Embedded Actions (Odoo 18) para vistas incrustadas -->
+    <record id="project_embedded_action_pims" model="ir.embedded.actions">
+        <field name="name">Pedidos Internos (PIM)</field>
+        <field name="parent_res_model">project.project</field>
+        <field name="sequence">80</field>
+        <field name="parent_action_id" ref="project.act_project_project_2_project_task_all"/>
+        <field name="python_method">action_view_pims</field>
+    </record>
+
+    <record id="project_embedded_action_sims" model="ir.embedded.actions">
+        <field name="name">Solicitudes (SIM)</field>
+        <field name="parent_res_model">project.project</field>
+        <field name="sequence">81</field>
+        <field name="parent_action_id" ref="project.act_project_project_2_project_task_all"/>
+        <field name="python_method">action_view_sims</field>
+    </record>
+</odoo>
