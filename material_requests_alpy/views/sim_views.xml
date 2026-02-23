@@ -109,17 +109,16 @@
                     </div>
                     <notebook>
                         <page string="Ítems de Material" name="items">
-                            <field name="line_ids"
-                                   readonly="state not in ('draft', 'pending_approval')">
+                            <field name="line_ids">
                                 <list editable="bottom"
                                        decoration-danger="stock_status == 'none'"
                                        decoration-warning="stock_status == 'partial'"
                                        decoration-success="stock_status == 'ok'">
                                     <field name="state" column_invisible="True"/>
-                                    <field name="product_id"/>
+                                    <field name="product_id" readonly="state not in ('draft', 'pending_approval')"/>
                                     <field name="product_category_id" readonly="1" optional="hide"/>
                                     <field name="uom_id" readonly="1"/>
-                                    <field name="qty_requested"/>
+                                    <field name="qty_requested" readonly="state not in ('draft', 'pending_approval')"/>
                                     <field name="qty_shipped"
                                            readonly="state not in ('approved', 'shipped')"/>
                                     <field name="stock_available" readonly="1"/>

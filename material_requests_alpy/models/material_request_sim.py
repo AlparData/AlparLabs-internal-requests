@@ -230,7 +230,6 @@ class MaterialRequestSIMLine(models.Model):
         'product.product',
         string='Material',
         required=True,
-        domain="[('type', '=', 'product')]",
     )
     product_category_id = fields.Many2one(
         related='product_id.categ_id',

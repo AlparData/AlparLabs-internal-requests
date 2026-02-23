@@ -128,7 +128,13 @@ class MaterialRequestPIM(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'material.request.pim'
                 ) or _('New')
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        for rec in records:
+            if rec.sim_id:
+                rec.sim_id.message_post(
+                    body=f"Se ha generado el Pedido Interno de Material vinculado: <a href='#' data-oe-model='material.request.pim' data-oe-id='{rec.id}'>{rec.name}</a>"
+                )
+        return records
 
     # =====================================================================
     # STATE TRANSITIONS
