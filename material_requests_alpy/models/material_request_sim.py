@@ -96,11 +96,9 @@ class MaterialRequestSIM(models.Model):
     )
 
     # ----- Smart Button: linked purchase orders -----
-    purchase_order_ids = fields.Many2many(
+    purchase_order_ids = fields.One2many(
         'purchase.order',
-        'sim_purchase_order_rel',
         'sim_id',
-        'purchase_order_id',
         string='Órdenes de Compra',
     )
     purchase_order_count = fields.Integer(

@@ -11,3 +11,10 @@ class StockPicking(models.Model):
         help='Pedido Interno de Material que originó este movimiento.',
         copy=False,
     )
+
+    def button_validate(self):
+        res = super().button_validate()
+        for picking in self:
+            if picking.pim_id and picking.state == 'done':
+                picking.pim_id._sync_shipped_quantities_from_pickings()
+        return res

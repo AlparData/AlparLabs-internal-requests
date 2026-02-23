@@ -13,3 +13,4 @@ access_sim_purchasing,material.request.sim.purchasing,model_material_request_sim
 access_sim_line_purchasing,material.request.sim.line.purchasing,model_material_request_sim_line,group_purchasing,1,1,1,0
 access_sim_create_po_wizard_purchasing,sim.create.po.wizard.purchasing,model_sim_create_po_wizard,group_purchasing,1,1,1,1
 access_sim_create_po_wizard_manager,sim.create.po.wizard.manager,model_sim_create_po_wizard,group_obra_manager,1,1,1,1
+access_material_request_report_user,material.request.report.user,model_material_request_report,group_obra_user,1,0,0,0

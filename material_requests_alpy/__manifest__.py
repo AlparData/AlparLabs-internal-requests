@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Gestión de Abastecimiento (SIM / PIM)',
-    'version': '18.0.3.0.1',
+    'version': '18.0.3.0.2',
     'category': 'Inventory/Purchase',
     'summary': 'Solicitudes Internas de Material (SIM) y Pedidos Internos de Material (PIM)',
     'description': """
@@ -30,6 +30,7 @@
         'views/project_views.xml',
         'views/stock_picking_views.xml',
         'views/purchase_order_views.xml',
+        'views/material_request_report_views.xml',
     ],
     'installable': True,
     'application': True,

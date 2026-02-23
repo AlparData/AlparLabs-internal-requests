@@ -259,6 +259,23 @@ class MaterialRequestPIM(models.Model):
         if self.state == 'approved':
             self.state = 'shipped'
 
+    def _sync_shipped_quantities_from_pickings(self):
+        """Called by stock.picking when a move is validated."""
+        for pim in self:
+            for line in pim.line_ids:
+                shipped = 0.0
+                for picking in pim.picking_ids.filtered(lambda p: p.state == 'done'):
+                    for move in picking.move_ids.filtered(lambda m: m.product_id == line.product_id):
+                        if hasattr(move, 'quantity'):
+                            shipped += move.quantity # Odoo 17/18
+                        elif hasattr(move, 'qty_done'):
+                            shipped += move.qty_done # Odoo < 17
+                line.qty_shipped = shipped
+            
+            # Optional: auto-deliver if all shipped
+            if all(line.qty_shipped >= line.qty_requested for line in pim.line_ids):
+                pim.state = 'delivered'
+
     def action_create_sim(self):
         """Crear SIM referenciada desde PIM en estado Pendiente de Stock, precargando materiales faltantes."""
         self.ensure_one()
