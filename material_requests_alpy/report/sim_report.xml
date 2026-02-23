@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_sim" model="ir.actions.report">
+        <field name="name">Solicitud Interna de Material (SIM)</field>
+        <field name="model">material.request.sim</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">material_requests_alpy.report_sim_document</field>
+        <field name="report_file">material_requests_alpy.report_sim_document</field>
+        <field name="print_report_name">'SIM - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_material_request_sim"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_sim_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <h2>
+                            Solicitud Interna de Material: <span t-field="doc.name"/>
+                        </h2>
+                        
+                        <div class="row mt32 mb32" id="informations">
+                            <div class="col-auto mw-100 mb-2">
+                                <strong>Obra / Centro de Costo:</strong>
+                                <p class="m-0" t-field="doc.project_id"/>
+                            </div>
+                            <div class="col-auto mw-100 mb-2">
+                                <strong>Solicitante:</strong>
+                                <p class="m-0" t-field="doc.user_id"/>
+                            </div>
+                            <div class="col-auto mw-100 mb-2" t-if="doc.pim_id">
+                                <strong>PIM Origen:</strong>
+                                <p class="m-0" t-field="doc.pim_id"/>
+                            </div>
+                            <div class="col-auto mw-100 mb-2">
+                                <strong>Fecha de Solicitud:</strong>
+                                <p class="m-0" t-field="doc.date_request" t-options='{"widget": "date"}'/>
+                            </div>
+                            <div class="col-auto mw-100 mb-2">
+                                <strong>Fecha Requerida:</strong>
+                                <p class="m-0" t-field="doc.date_required"/>
+                            </div>
+                            <div class="col-auto mw-100 mb-2">
+                                <strong>Prioridad:</strong>
+                                <p class="m-0" t-field="doc.priority"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm o_main_table mt-4">
+                            <thead>
+                                <tr>
+                                    <th name="th_product"><strong>Material</strong></th>
+                                    <th name="th_description"><strong>Descripción</strong></th>
+                                    <th name="th_qty_req" class="text-right"><strong>Cant. Solicitada</strong></th>
+                                    <th name="th_uom"><strong>UdM</strong></th>
+                                    <th name="th_notes"><strong>Notas</strong></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.line_ids" t-as="line">
+                                    <tr>
+                                        <td><span t-field="line.product_id"/></td>
+                                        <td><span t-field="line.description"/></td>
+                                        <td class="text-right"><span t-field="line.qty_requested"/></td>
+                                        <td><span t-field="line.uom_id"/></td>
+                                        <td><span t-field="line.notes"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        
+                        <div t-if="doc.justification" class="mt-4">
+                            <strong>Justificación / Cotizaciones:</strong>
+                            <p t-field="doc.justification"/>
+                        </div>
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
