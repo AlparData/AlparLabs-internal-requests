@@ -48,7 +48,6 @@
                             <thead>
                                 <tr>
                                     <th name="th_product"><strong>Producto</strong></th>
-                                    <th name="th_description"><strong>Descripción</strong></th>
                                     <th name="th_qty_req" class="text-right"><strong>Cant. Solicitada</strong></th>
                                     <th name="th_qty_ship" class="text-right"><strong>Cant. Despachada</strong></th>
                                     <th name="th_uom"><strong>UdM</strong></th>
@@ -58,7 +57,6 @@
                                 <t t-foreach="doc.line_ids" t-as="line">
                                     <tr>
                                         <td><span t-field="line.product_id"/></td>
-                                        <td><span t-field="line.description"/></td>
                                         <td class="text-right"><span t-field="line.qty_requested"/></td>
                                         <td class="text-right"><span t-field="line.qty_shipped"/></td>
                                         <td><span t-field="line.uom_id"/></td>
