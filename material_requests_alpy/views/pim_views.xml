@@ -42,20 +42,16 @@
                             invisible="state != 'draft'"/>
                     <button name="action_send_quotation" string="Enviar a Cotización"
                             type="object" class="btn-primary"
-                            invisible="state != 'requested'"
-                            groups="material_requests_alpy.group_purchasing"/>
+                            invisible="state != 'requested'"/>
                     <button name="action_issue_po" string="Orden de Compra Emitida"
                             type="object" class="btn-primary"
-                            invisible="state != 'quotation'"
-                            groups="material_requests_alpy.group_purchasing"/>
+                            invisible="state != 'quotation'"/>
                     <button name="action_receive" string="Ingresado a Depósito"
                             type="object" class="btn-primary"
-                            invisible="state != 'po_issued'"
-                            groups="material_requests_alpy.group_purchasing"/>
+                            invisible="state != 'po_issued'"/>
                     <button name="action_close" string="Cerrar"
                             type="object" class="btn-success"
-                            invisible="state != 'received'"
-                            groups="material_requests_alpy.group_obra_manager"/>
+                            invisible="state != 'received'"/>
                     <button name="action_cancel" string="Anular"
                             type="object" class="btn-danger"
                             invisible="state in ('closed', 'canceled')"/>

@@ -42,28 +42,12 @@
         <!-- RECORD RULES                                                 -->
         <!-- ============================================================ -->
 
-        <!-- Usuario de Obra: Solo sus propios registros PIM -->
+        <!-- Usuario de Obra: Ve todos los registros PIM -->
         <record id="rule_pim_obra_user" model="ir.rule">
-            <field name="name">PIM: Solo mis registros</field>
+            <field name="name">PIM: Todos los registros</field>
             <field name="model_id" ref="model_material_request_pim"/>
-            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_obra_user'))]"/>
-        </record>
-
-        <!-- Jefe de Obra: Ve todos los registros PIM -->
-        <record id="rule_pim_obra_manager" model="ir.rule">
-            <field name="name">PIM: Todos los registros (Administrador Total)</field>
-            <field name="model_id" ref="model_material_request_pim"/>
-            <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('group_obra_manager'))]"/>
-        </record>
-
-        <!-- Compras: Ve todos los PIM -->
-        <record id="rule_pim_purchasing" model="ir.rule">
-            <field name="name">PIM: Todos los registros (Compras)</field>
-            <field name="model_id" ref="model_material_request_pim"/>
-            <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('group_purchasing'))]"/>
         </record>
 
     </data>
