@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Gestión de Abastecimiento (PIM)',
-    'version': '18.0.3.0.4',
+    'version': '18.0.3.0.5',
     'category': 'Inventory/Purchase',
     'summary': 'Pedidos Internos de Material (PIM)',
     'description': """

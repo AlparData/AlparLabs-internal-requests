@@ -24,18 +24,10 @@
 
         <!-- Jefe de Obra / Gerencia: Aprueba o Rechaza PIMs -->
         <record id="group_obra_manager" model="res.groups">
-            <field name="name">Jefe de Obra / Gerencia</field>
+            <field name="name">Admin. Total (Gerencia)</field>
             <field name="category_id" ref="module_category_material_requests"/>
             <field name="implied_ids" eval="[(4, ref('group_obra_user'))]"/>
-            <field name="comment">Aprueba o rechaza PIMs. Ve todos los registros.</field>
-        </record>
-
-        <!-- Logística (Pañol): Gestiona estados de PIM (Despacho/Entrega) -->
-        <record id="group_logistics" model="res.groups">
-            <field name="name">Logística (Pañol)</field>
-            <field name="category_id" ref="module_category_material_requests"/>
-            <field name="implied_ids" eval="[(4, ref('group_obra_user'))]"/>
-            <field name="comment">Gestiona los estados del PIM (Despachado/Entregado).</field>
+            <field name="comment">Administrador total. Ve todos los registros y puede anular todo.</field>
         </record>
 
         <!-- Compras: Gestiona estados de PIM (Cotización/OC) -->
@@ -60,18 +52,10 @@
 
         <!-- Jefe de Obra: Ve todos los registros PIM -->
         <record id="rule_pim_obra_manager" model="ir.rule">
-            <field name="name">PIM: Todos los registros (Gerencia)</field>
+            <field name="name">PIM: Todos los registros (Administrador Total)</field>
             <field name="model_id" ref="model_material_request_pim"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_obra_manager'))]"/>
-        </record>
-
-        <!-- Logística: Ve todos los PIM -->
-        <record id="rule_pim_logistics" model="ir.rule">
-            <field name="name">PIM: Todos los registros (Logística)</field>
-            <field name="model_id" ref="model_material_request_pim"/>
-            <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('group_logistics'))]"/>
         </record>
 
         <!-- Compras: Ve todos los PIM -->

@@ -24,13 +24,14 @@ class MaterialRequestPIM(models.Model):
         tracking=True,
     )
     state = fields.Selection([
+        ('draft', 'Borrador'),
         ('requested', 'Solicitado'),
         ('quotation', 'En Cotización'),
         ('po_issued', 'Orden de Compra Emitida'),
         ('received', 'Ingresado a Depósito'),
         ('closed', 'Cerrado'),
         ('canceled', 'Anulado'),
-    ], string='Estado', default='requested', tracking=True, copy=False)
+    ], string='Estado', default='draft', tracking=True, copy=False)
 
     priority = fields.Selection([
         ('0', 'Baja'),
@@ -130,13 +131,18 @@ class MaterialRequestPIM(models.Model):
     # =====================================================================
     # STATE TRANSITIONS
     # =====================================================================
-    def action_send_quotation(self):
-        """Solicitado -> En Cotización"""
+    def action_submit(self):
+        """Borrador -> Solicitado"""
         for rec in self:
             if not rec.line_ids:
                 raise UserError(_('Debe agregar al menos un ítem de material.'))
             if not rec.justification:
                 raise UserError(_('La justificación es obligatoria.'))
+            rec.state = 'requested'
+
+    def action_send_quotation(self):
+        """Solicitado -> En Cotización"""
+        for rec in self:
             rec.date_quotation = fields.Datetime.now()
             rec.state = 'quotation'
 
@@ -166,9 +172,9 @@ class MaterialRequestPIM(models.Model):
             rec.state = 'canceled'
 
     def action_reset_draft(self):
-        """Anulado -> Solicitado"""
+        """Anulado -> Borrador"""
         for rec in self:
-            rec.state = 'requested'
+            rec.state = 'draft'
 
     # =====================================================================
     # SMART BUTTONS

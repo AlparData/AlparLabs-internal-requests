@@ -37,6 +37,9 @@
         <field name="arch" type="xml">
             <form string="Pedido Interno de Material (PIM)">
                 <header>
+                    <button name="action_submit" string="Confirmar Solicitud"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
                     <button name="action_send_quotation" string="Enviar a Cotización"
                             type="object" class="btn-primary"
                             invisible="state != 'requested'"
@@ -48,7 +51,7 @@
                     <button name="action_receive" string="Ingresado a Depósito"
                             type="object" class="btn-primary"
                             invisible="state != 'po_issued'"
-                            groups="material_requests_alpy.group_purchasing,material_requests_alpy.group_logistics"/>
+                            groups="material_requests_alpy.group_purchasing"/>
                     <button name="action_close" string="Cerrar"
                             type="object" class="btn-success"
                             invisible="state != 'received'"
@@ -56,7 +59,7 @@
                     <button name="action_cancel" string="Anular"
                             type="object" class="btn-danger"
                             invisible="state in ('closed', 'canceled')"/>
-                    <button name="action_reset_draft" string="Volver a Solicitado"
+                    <button name="action_reset_draft" string="Volver a Borrador"
                             type="object"
                             invisible="state != 'canceled'"/>
                     
@@ -67,7 +70,7 @@
                             groups="material_requests_alpy.group_purchasing"/>
 
                     <field name="state" widget="statusbar"
-                           statusbar_visible="requested,quotation,po_issued,received,closed"/>
+                           statusbar_visible="draft,requested,quotation,po_issued,received,closed"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -85,14 +88,14 @@
                     <group>
                         <group string="Información General">
                             <field name="project_id"
-                                   readonly="state != 'requested'"/>
+                                   readonly="state != 'draft'"/>
                             <field name="priority" widget="priority"/>
                             <field name="user_id" widget="many2one_avatar_user"/>
                         </group>
                         <group string="Fechas">
                             <field name="date_request"/>
                             <field name="date_required"
-                                   readonly="state != 'requested'"/>
+                                   readonly="state != 'draft'"/>
                             <field name="date_quotation"
                                    invisible="not date_quotation"/>
                             <field name="date_po_issued"
@@ -106,7 +109,7 @@
                     <notebook>
                         <page string="Ítems de Material" name="items">
                             <field name="line_ids"
-                                   readonly="state not in ('requested',)">
+                                   readonly="state != 'draft'">
                                 <list editable="bottom">
                                     <field name="product_id"/>
                                     <field name="product_category_id" readonly="1" optional="hide"/>
@@ -119,7 +122,7 @@
                         <page string="Justificación" name="justification">
                             <field name="justification"
                                    placeholder="Justificación detallada del pedido (obligatorio)..."
-                                   readonly="state != 'requested'"/>
+                                   readonly="state != 'draft'"/>
                         </page>
                         <page string="Adjuntos" name="attachments">
                             <field name="attachment_ids" widget="many2many_binary"
@@ -127,7 +130,7 @@
                         </page>
                         <page string="Notas" name="notes">
                             <field name="notes" placeholder="Notas adicionales..."
-                                   readonly="state not in ('requested',)"/>
+                                   readonly="state != 'draft'"/>
                         </page>
                     </notebook>
                 </sheet>
@@ -151,6 +154,8 @@
                 <filter string="Mis PIMs" name="my_pims"
                         domain="[('user_id', '=', uid)]"/>
                 <separator/>
+                <filter string="Borrador" name="draft"
+                        domain="[('state', '=', 'draft')]"/>
                 <filter string="Solicitado" name="requested"
                         domain="[('state', '=', 'requested')]"/>
                 <filter string="En Cotización" name="quotation"
