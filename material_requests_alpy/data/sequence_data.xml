@@ -12,15 +12,5 @@
             <field name="number_next">1</field>
         </record>
 
-        <!-- Secuencia para SIM -->
-        <record id="seq_material_request_sim" model="ir.sequence">
-            <field name="name">Solicitud Interna de Material</field>
-            <field name="code">material.request.sim</field>
-            <field name="prefix">SIM-</field>
-            <field name="padding">3</field>
-            <field name="number_increment">1</field>
-            <field name="number_next">1</field>
-        </record>
-
     </data>
 </odoo>

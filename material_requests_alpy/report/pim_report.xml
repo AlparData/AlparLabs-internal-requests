@@ -31,7 +31,7 @@
                                 <p class="m-0" t-field="doc.user_id"/>
                             </div>
                             <div class="col-auto mw-100 mb-2">
-                                <strong>Fecha de Pedido:</strong>
+                                <strong>Fecha de Solicitud:</strong>
                                 <p class="m-0" t-field="doc.date_request" t-options='{"widget": "date"}'/>
                             </div>
                             <div class="col-auto mw-100 mb-2">
@@ -39,18 +39,18 @@
                                 <p class="m-0" t-field="doc.date_required"/>
                             </div>
                             <div class="col-auto mw-100 mb-2">
-                                <strong>Depósito Destino:</strong>
-                                <p class="m-0" t-field="doc.location_id"/>
+                                <strong>Prioridad:</strong>
+                                <p class="m-0" t-field="doc.priority"/>
                             </div>
                         </div>
 
                         <table class="table table-sm o_main_table mt-4">
                             <thead>
                                 <tr>
-                                    <th name="th_product"><strong>Producto</strong></th>
+                                    <th name="th_product"><strong>Material</strong></th>
                                     <th name="th_qty_req" class="text-right"><strong>Cant. Solicitada</strong></th>
-                                    <th name="th_qty_ship" class="text-right"><strong>Cant. Despachada</strong></th>
                                     <th name="th_uom"><strong>UdM</strong></th>
+                                    <th name="th_notes"><strong>Notas</strong></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -58,16 +58,16 @@
                                     <tr>
                                         <td><span t-field="line.product_id"/></td>
                                         <td class="text-right"><span t-field="line.qty_requested"/></td>
-                                        <td class="text-right"><span t-field="line.qty_shipped"/></td>
                                         <td><span t-field="line.uom_id"/></td>
+                                        <td><span t-field="line.notes"/></td>
                                     </tr>
                                 </t>
                             </tbody>
                         </table>
                         
-                        <div t-if="doc.notes" class="mt-4">
-                            <strong>Notas:</strong>
-                            <p t-field="doc.notes"/>
+                        <div t-if="doc.justification" class="mt-4">
+                            <strong>Justificación / Cotizaciones:</strong>
+                            <p t-field="doc.justification"/>
                         </div>
                         <div class="oe_structure"/>
                     </div>

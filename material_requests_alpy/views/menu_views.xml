@@ -1,28 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
-    <!-- ============================================================ -->
-    <!-- ROOT MENU                                                    -->
-    <!-- ============================================================ -->
-    <menuitem id="menu_material_requests_root"
-              name="Abastecimiento"
-              web_icon="material_requests_alpy,static/description/icon.png"
-              sequence="45"
-              groups="material_requests_alpy.group_obra_user"/>
-
     <!-- ============================================================ -->
     <!-- SUB-MENUS                                                    -->
     <!-- ============================================================ -->
     <menuitem id="menu_pim"
-              name="Pedidos Internos (PIM) - Obra"
-              parent="menu_material_requests_root"
+              name="Pedidos Internos (PIM)"
+              parent="stock.menu_stock_root"
               action="action_pim_list"
               sequence="10"/>
-
-    <menuitem id="menu_sim"
-              name="Solicitudes Internas (SIM) - Compras"
-              parent="menu_material_requests_root"
-              action="action_sim_list"
-              sequence="20"/>
 
 </odoo>
