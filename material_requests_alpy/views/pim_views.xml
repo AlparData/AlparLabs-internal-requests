@@ -117,7 +117,7 @@
                         </page>
                         <page string="Justificación" name="justification">
                             <field name="justification"
-                                   placeholder="Justificación detallada del pedido (obligatorio)..."
+                                   placeholder="Justificación detallada del pedido..."
                                    readonly="state != 'draft'"/>
                         </page>
                         <page string="Adjuntos" name="attachments">

@@ -20,7 +20,6 @@ class MaterialRequestPIM(models.Model):
     project_id = fields.Many2one(
         'project.project',
         string='Obra / Centro de Costo',
-        required=True,
         tracking=True,
     )
     state = fields.Selection([
@@ -42,8 +41,7 @@ class MaterialRequestPIM(models.Model):
 
     justification = fields.Text(
         string='Justificación',
-        required=True,
-        help='Justificación obligatoria de la solicitud de compra de material.',
+        help='Justificación de la solicitud de compra de material.',
     )
     line_ids = fields.One2many(
         'material.request.pim.line',
@@ -136,8 +134,6 @@ class MaterialRequestPIM(models.Model):
         for rec in self:
             if not rec.line_ids:
                 raise UserError(_('Debe agregar al menos un ítem de material.'))
-            if not rec.justification:
-                raise UserError(_('La justificación es obligatoria.'))
             rec.state = 'requested'
 
     def action_send_quotation(self):
